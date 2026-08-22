@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cmvp"
+version = "1.0.0"
+description = "Configuration-Model Validated Projection: statistical backbone extraction for monopartite networks"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "networkx",
+    "scipy",
+    "tqdm",
+    "matplotlib",
+    "NEMtropy",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cmvp*"]
