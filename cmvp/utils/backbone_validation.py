@@ -284,9 +284,9 @@ class BackboneValidator(_NullCalibrationMixin, _SimilarityPlotsMixin, BaseValida
                                 label=f'α_corrected={fdr_threshold:.2e} (FDR)')
 
         axes[1].axvline(mean_pval, color='green', linestyle=':', linewidth=2, label=f'μ={mean_pval:.4f}')
-        axes[1].set_xlabel('P-value', fontweight='bold')
+        axes[1].set_xlabel('p-value', fontweight='bold')
         axes[1].set_ylabel('Count', fontweight='bold')
-        axes[1].set_title(f'P-value Distribution (σ²={var_pval:.6f}, σ={std_pval:.4f})', fontweight='bold')
+        axes[1].set_title(f'p-value Distribution (σ²={var_pval:.6f}, σ={std_pval:.4f})', fontweight='bold')
         axes[1].legend()
         axes[1].grid(alpha=PlotConfig.GRID_ALPHA)
 

@@ -335,34 +335,43 @@ class _SimilarityPlotsMixin:
         np.fill_diagonal(backbone_binary, 0)
 
         # Create 2×2 plot grid
-        fig, axes = plt.subplots(2, 2, figsize=(12, 11))
+        fig, axes = plt.subplots(2, 2, figsize=(13.5, 12.5))
         sns.set_style("white")
 
+        title_size = PlotConfig.FONT_SIZE_TITLE + 9
+        cbar_label_size = PlotConfig.FONT_SIZE_LABEL + 5
+        cbar_tick_size = PlotConfig.FONT_SIZE_TICK + 5
+
         # === Row 1: Expected, Observed ===
-        sns.heatmap(
+        hm1 = sns.heatmap(
             expected_sim, ax=axes[0, 0], cmap="Greens",
             vmin=0, vmax=cn_vmax, cbar_kws={"fraction": 0.046}
         )
-        axes[0, 0].set_title(f"Expected {sim_label}", size=13, fontweight='bold')
+        hm1.collections[0].colorbar.ax.tick_params(labelsize=cbar_tick_size)
+        axes[0, 0].set_title(f"Expected {sim_label}", size=title_size, fontweight='bold')
 
-        sns.heatmap(
+        hm2 = sns.heatmap(
             observed_sim, ax=axes[0, 1], cmap="Blues",
             vmin=0, vmax=cn_vmax, cbar_kws={"fraction": 0.046}
         )
-        axes[0, 1].set_title(f"Observed {sim_label}", size=13, fontweight='bold')
+        hm2.collections[0].colorbar.ax.tick_params(labelsize=cbar_tick_size)
+        axes[0, 1].set_title(f"Observed {sim_label}", size=title_size, fontweight='bold')
 
         # === Row 2: Validated, Backbone ===
-        sns.heatmap(
+        hm3 = sns.heatmap(
             validated_matrix, ax=axes[1, 0], cmap=val_cmap,
             cbar_kws={"label": val_label, "fraction": 0.046}
         )
-        axes[1, 0].set_title(f"Validated Similarity\n({val_label})", size=13, fontweight='bold')
+        hm3_cbar = hm3.collections[0].colorbar
+        hm3_cbar.ax.tick_params(labelsize=cbar_tick_size)
+        hm3_cbar.set_label(val_label, fontsize=cbar_label_size)
+        axes[1, 0].set_title(f"Validated Similarity\n({val_label})", size=title_size, fontweight='bold')
 
         sns.heatmap(
             backbone_binary, ax=axes[1, 1], cmap="Greys",
             vmin=0, vmax=1, cbar=False
         )
-        axes[1, 1].set_title(f"Backbone Edges", size=13, fontweight='bold')
+        axes[1, 1].set_title(f"Backbone Edges", size=title_size, fontweight='bold')
 
         # Clean axes
         for row in axes:

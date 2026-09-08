@@ -852,7 +852,7 @@ class _NullCalibrationMixin:
             ax_fit.legend(fontsize=PlotConfig.FONT_SIZE_TICK, loc='upper left')
             ax_fit.grid(alpha=PlotConfig.GRID_ALPHA)
 
-        ax_pmf.set_xlabel('Common neighbors $CN_{ij}$')
+        ax_pmf.set_xlabel('Common Neighbors $CN_{ij}$')
         ax_pmf.set_ylabel('Null pmf $P(CN_{ij} = v)$')
         ax_pmf.set_title('Null probability mass function by degree pair')
         ax_pmf.legend(fontsize=PlotConfig.FONT_SIZE_TICK, loc='upper right')
