@@ -20,6 +20,9 @@ NEMtropy) are installed automatically.
 
 ## Quickstart
 
+See also [`examples/quickstart.ipynb`](examples/quickstart.ipynb) for a
+runnable notebook version of this.
+
 ```python
 from cmvp import CMVP
 import networkx as nx
@@ -28,7 +31,8 @@ G = nx.karate_club_graph()
 
 cmvp = CMVP(G, seed=42)
 cmvp.fit_configuration_model(model='auto', method='fixed-point', max_iter=1000)
-cmvp.validate_projection(alpha=0.05, correction='fdr', test='poisson')
+cmvp.validate_projection(test='poisson')
+cmvp.filter_backbone(alpha=0.05, correction='fdr')
 
 G_backbone = cmvp.to_networkx()
 ```
@@ -127,14 +131,11 @@ Directed, Weighted      →  'decm_exp'     (Directed Enhanced Config Model, Exp
 
 ```python
 cmvp.validate_projection(
-    alpha=0.05,
     similarity='common_neighbors',
-    correction='fdr',
     directed_mode='out-out',
     tail='right',
     test='poisson',
-    weighted=False,
-    transform='pvalue'
+    mid_p=False
 )
 ```
 
@@ -142,15 +143,14 @@ cmvp.validate_projection(
 
 | Parameter | Type | Default | Options | Notes |
 |-----------|------|---------|---------|-------|
-| `alpha` | float | `0.01` | 0 to 1 | Significance level. Ignored if `target_density` is set |
 | `similarity` | str | `'common_neighbors'` | `'common_neighbors'` only | **Only common neighbors** supports statistical validation (analytical variance) |
-| `correction` | str | `'fdr'` | `'fdr'`, `'bonferroni'`, `'none'` | Multiple testing correction. Ignored if `target_density` is set |
 | `directed_mode` | str | `'out-out'` | `'out-out'`, `'in-in'`, `'out-in'`, `'in-out'` | Overlap type for directed graphs |
-| `target_density` | float | `None` | 0 < d ≤ 1 | Target backbone density. Overrides `alpha`/`correction` if set |
-| `tail` | str | `'right'` | `'right'`, `'left'` | `'right'`: test for similarity (observed >> expected). `'left'`: test for dissimilarity |
-| `test` | str | `'poisson'` | `'poisson'`, `'normal'`, `'poisson-binomial'` | Statistical test for p-values |
-| `weighted` | bool | `False` | `True`, `False` | Compute weighted common neighbors (requires ECM/DECM model) |
-| `transform` | str | `'pvalue'` | `'pvalue'`, `'neglog'`, `'logneglog'` | Transform for `tested_sim_matrix` |
+| `tail` | str | `'right'` | `'right'`, `'left'`, `'both'` | `'right'`: test for similarity (observed >> expected). `'left'`: test for dissimilarity. `'both'`: signed test (requires `test='normal'` or `'poisson-binomial'`) |
+| `test` | str | `'poisson'` | `'poisson'`, `'normal'`, `'poisson-binomial'` | Statistical test for p-values. Forced to `'normal'` for weighted null models |
+| `mid_p` | bool | `False` | `True`, `False` | Mid-p correction for the discrete `'poisson'`/`'poisson-binomial'` tests (reduces conservativeness) |
+
+This computes p-values only — call `filter_backbone()` (below) to apply
+`alpha`/`correction`/`target_density` thresholds.
 
 #### Test Types
 ```
@@ -194,8 +194,7 @@ After `validate_projection()`, these are available:
 |-----------|------|----------|
 | `obs_sim_matrix` | ndarray | Observed similarity (common neighbors) |
 | `exp_sim_matrix` | ndarray | Expected similarity under null model |
-| `tested_sim_matrix_pvalue` | ndarray | Raw p-values |
-| `tested_sim_matrix` | ndarray | Transformed p-values (based on `transform` param) |
+| `test_sim_matrix_pvalue` | sparse | Raw p-values (right-tail; also left-tail via `_pvalues_left` when `tail='both'`) |
 | `jaccard_matrix` | ndarray | Jaccard similarity (computed separately for reference) |
 | `backbone` | sparse CSR | Binary adjacency matrix of validated edges |
 | `p_matrix` | ndarray | Edge probability matrix from null model |
@@ -245,6 +244,8 @@ cmvp/
 │   ├── test_core_pipeline.py
 │   ├── test_cli.py
 │   └── test_utils.py
+├── examples/
+│   └── quickstart.ipynb  # runnable end-to-end example (karate club graph)
 ├── pyproject.toml
 ├── pytest.ini
 ├── LICENSE
