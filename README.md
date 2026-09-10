@@ -42,7 +42,8 @@ Or one-shot:
 ```python
 from cmvp import cmvp_backbone
 
-backbone, pvalues = cmvp_backbone(G, alpha=0.01)
+cmvp = cmvp_backbone(G, alpha=0.01)   # fits, validates, and filters in one call
+G_backbone = cmvp.to_networkx()
 ```
 
 ## Command line
@@ -171,18 +172,51 @@ cmvp.filter_backbone(target_density=0.05)
 cmvp.filter_backbone(connected=True)
 ```
 
+**Parameters:**
+
+| Parameter | Type | Default | Notes |
+|-----------|------|---------|-------|
+| `alpha` | float | `0.01` | Significance level. Required unless `target_density` or `connected` is set |
+| `correction` | str | `'fdr'` | `'fdr'`, `'bonferroni'`, `'none'` |
+| `target_density` | float | `None` | Target backbone density in `(0, 1]`; overrides `alpha`/`correction` |
+| `connected` | bool | `False` | Take the minimum leading-p-value edges needed for a single connected component; overrides `alpha`/`target_density` |
+
 Change `alpha`, `correction`, or `target_density` and re-apply thresholds to
-already-computed p-values without refitting the null model.
+already-computed p-values without refitting the null model. Also works after
+`validate_projection(tail='both')`, producing a signed backbone (see below).
 
 ---
 
 ### 5. Convert to NetworkX
 
 ```python
-G_backbone = cmvp.to_networkx(backbone=cmvp.backbone)
+G_backbone = cmvp.to_networkx(backbone=cmvp.backbone, weight='sig')
 ```
 
-Returns a NetworkX graph with all original node attributes copied.
+`weight` selects which matrix is duplicated onto the generic NetworkX `weight`
+edge attribute: `'sig'` (`test_sim_matrix_sig`, logneglog significance,
+default) or `'effect'` (`test_sim_matrix_effect`, theta-hat effect
+size/direction with the degree term divided out — use this to avoid
+re-weighting downstream community detection by significance). Both `sig` and
+`effect` are always attached as their own named edge attributes regardless of
+this choice. Returns a NetworkX graph with all original node attributes
+copied.
+
+After `validate_projection(tail='both')`, use `cmvp.to_networkx_signed()` to
+get a graph with an additional `sign` (+1/-1) edge attribute instead, built
+from `cmvp.backbone_signed`.
+
+---
+
+### 6. Save / Load
+
+```python
+cmvp.save("results/run1")             # -> run1.npz, run1_graph.graphml, run1_meta.json
+cmvp = CMVP.load("results/run1")      # restores all matrices, no refitting needed
+```
+
+Persists all computed matrices, config, and the graph so `filter_backbone()`
+can be re-run later without recomputing p-values.
 
 ---
 
@@ -194,11 +228,20 @@ After `validate_projection()`, these are available:
 |-----------|------|----------|
 | `obs_sim_matrix` | ndarray | Observed similarity (common neighbors) |
 | `exp_sim_matrix` | ndarray | Expected similarity under null model |
-| `test_sim_matrix_pvalue` | sparse | Raw p-values (right-tail; also left-tail via `_pvalues_left` when `tail='both'`) |
+| `exp_sim_matrix_std` | ndarray | Std. dev. of expected similarity under null model |
+| `test_sim_matrix_zscore` | ndarray | `(obs - exp) / std` for all pairs with variance under the null |
+| `test_sim_matrix_effect` | ndarray | `(obs - exp) / variance` (theta-hat effect size — association strength/direction, degree term divided out; use as edge *weight*, not as a significance filter) |
+| `test_sim_matrix_pvalue` | sparse | Raw right-tail p-values |
+| `_pvalues_left` | ndarray | Left-tail p-values; only set when `tail='both'` |
+| `test_sim_matrix_sig` | sparse | `log(-log(p-value))` significance transform (signed for `tail='both'`) |
 | `jaccard_matrix` | ndarray | Jaccard similarity (computed separately for reference) |
 | `backbone` | sparse CSR | Binary adjacency matrix of validated edges |
+| `backbone_signed` | sparse CSR | Signed backbone (+1/-1); only set when `tail='both'` |
 | `p_matrix` | ndarray | Edge probability matrix from null model |
-| `w_matrix` | ndarray | Edge weight expectation matrix (weighted models) |
+| `w_matrix` | ndarray | Edge weight expectation matrix (weighted models); `None` for unweighted models |
+
+`cmvp.config` and `cmvp.results` give a dict snapshot of the current
+configuration and computed matrices, respectively.
 
 ---
 
